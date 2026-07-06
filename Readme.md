@@ -151,6 +151,3 @@ data and works on any set of images out of the box.
 - Add a similarity-score threshold to show "no good match" instead of
   forcing a low-confidence result
 
-## License
-
-MIT — free to use, modify, and learn from.
