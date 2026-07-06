@@ -1,69 +1,156 @@
-# Semantic Image Search Engine (CLIP + Streamlit)
+# 🔍 Semantic Image Search Engine (CLIP + Streamlit)
 
-Search a set of images using natural language queries — no labels, no training.
-Built on OpenAI's CLIP (Contrastive Language–Image Pretraining) model.
+Search a set of images using natural language — no labels, no training,
+no keyword tags. Powered by OpenAI's **CLIP** (Contrastive Language–Image
+Pretraining) model.
 
-## Why this project is worth putting on your CV
+Type something like *"a red car on a street"* or *"someone laughing
+outdoors"* and the app ranks your uploaded images by how well they match —
+purely from visual understanding, with zero manual tagging.
 
-Most student CV projects say "trained a CNN to classify cats vs dogs."
-This one shows you understand **multimodal embeddings** — the same idea behind
-Google Image search-by-text, Pinterest visual search, and CLIP-guided
-generative models (Stable Diffusion, DALL·E). It's CV + NLP in one project,
-and it's genuinely useful (zero-shot, no labeled dataset needed).
+---
 
 ## How it works
 
-1. CLIP has two encoders: one for images, one for text. Both are trained so
-   that matching image/caption pairs land close together in the same
-   512-dimensional vector space.
-2. We embed every uploaded image once (cached).
-3. When you type a query, we embed the text with the *same* space.
-4. We rank images by cosine similarity to the query vector and show the
-   top matches.
+CLIP has two encoders — one for images, one for text — trained together so
+that matching image/caption pairs land close together in the same
+512-dimensional vector space.
 
-No categories are hard-coded — you could type "a cozy reading nook" or
-"someone laughing outdoors" and it will still work, as long as the concept
-is visually present in an image.
+1. Every uploaded image is converted into a 512-number vector.
+2. Your text query is converted into a vector the same way.
+3. Images are ranked by **cosine similarity** to the query vector.
+4. Top matches are displayed.
 
-## Run it locally
+No categories are hard-coded. It works because CLIP was pretrained on
+~400 million (image, caption) pairs, so it already understands a huge range
+of visual concepts out of the box (this is called **zero-shot** learning).
+
+---
+
+## Tech stack
+
+- **Python**
+- **PyTorch** — underlying tensor/model math
+- **Hugging Face Transformers** — loads and runs the CLIP model
+- **Streamlit** — web UI
+- **Pillow** — image loading
+
+---
+
+## Setup
+
+### 1. Clone the repo
 
 ```bash
+git clone https://github.com/NitinKaira1/clip-semantic-image-search.git
+cd clip-semantic-image-search
+```
+
+### 2. Create a virtual environment and install dependencies
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate      # Windows
+# source .venv/bin/activate   # macOS/Linux
+
 pip install -r requirements.txt
+```
+
+### 3. Get the CLIP model
+
+The app needs the `openai/clip-vit-base-patch32` model. There are two ways
+to get it — try Option A first.
+
+**Option A — Automatic (recommended)**
+
+Just run the app (see Step 4 below). On first run, `transformers` will
+automatically download the model (~600MB) from Hugging Face. No action
+needed on your part.
+
+**Option B — Manual download (if Option A fails with an SSL error)**
+
+Some networks (corporate/college firewalls, antivirus software doing SSL
+inspection) block Python's certificate verification, even though your
+browser works fine. If you hit an error like
+`SSL: CERTIFICATE_VERIFY_FAILED`, download the model manually instead:
+
+1. Create a folder named `clip-local` inside the project directory.
+2. Download each of these files and place them directly inside
+   `clip-local/` (right-click each link → "Save link as..." so it
+   downloads instead of opening in the browser):
+
+   - [config.json](https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/config.json)
+   - [preprocessor_config.json](https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/preprocessor_config.json)
+   - [tokenizer_config.json](https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/tokenizer_config.json)
+   - [vocab.json](https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/vocab.json)
+   - [merges.txt](https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/merges.txt)
+   - [special_tokens_map.json](https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/special_tokens_map.json)
+   - [pytorch_model.bin](https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/pytorch_model.bin) *(~600MB — the actual model weights)*
+
+3. That's it. `app.py` automatically detects the `clip-local` folder and
+   uses it instead of downloading — no code changes needed.
+
+   *(Alternative for Option B: run these in PowerShell instead of clicking
+   links one by one — same result, usually more reliable)*
+
+   ```powershell
+   mkdir clip-local
+   cd clip-local
+   Invoke-WebRequest -Uri "https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/config.json" -OutFile "config.json"
+   Invoke-WebRequest -Uri "https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/preprocessor_config.json" -OutFile "preprocessor_config.json"
+   Invoke-WebRequest -Uri "https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/tokenizer_config.json" -OutFile "tokenizer_config.json"
+   Invoke-WebRequest -Uri "https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/vocab.json" -OutFile "vocab.json"
+   Invoke-WebRequest -Uri "https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/merges.txt" -OutFile "merges.txt"
+   Invoke-WebRequest -Uri "https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/special_tokens_map.json" -OutFile "special_tokens_map.json"
+   Invoke-WebRequest -Uri "https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/pytorch_model.bin" -OutFile "pytorch_model.bin"
+   ```
+
+### 4. Run the app
+
+```bash
 streamlit run app.py
 ```
 
-The first run downloads the CLIP model (~350 MB) from Hugging Face — after
-that it's cached locally.
+Your browser should open automatically at `http://localhost:8501`. If not,
+open that URL manually.
 
-## Deploy it online (free, so you can link it on your CV/LinkedIn)
+### 5. Use it
 
-### Option A: Streamlit Community Cloud (easiest)
-1. Push this folder to a public GitHub repo.
-2. Go to https://share.streamlit.io → "New app" → pick your repo/branch → set
-   main file to `app.py`.
-3. Deploy. You'll get a public URL like `yourapp.streamlit.app`.
+1. Upload 10-30 images in the sidebar (varied subjects work best for a demo).
+2. Type a natural-language search query.
+3. See the ranked results.
 
-### Option B: Hugging Face Spaces
-1. Create a new Space at https://huggingface.co/new-space → SDK: Streamlit.
-2. Upload `app.py` and `requirements.txt` (or push via git).
-3. It builds automatically and gives you a public URL.
+---
 
-Either way — put the live link directly on your resume/LinkedIn, not just the
-GitHub repo. Recruiters click links they can try in 10 seconds far more than
-they read code.
+## Project structure
 
-## Ideas to extend it (good talking points in interviews)
+```
+clip-semantic-image-search/
+├── app.py              # Main Streamlit app
+├── requirements.txt    # Python dependencies
+├── README.md
+├── .gitignore
+└── clip-local/          # (optional, not tracked by git) manually downloaded model files
+```
 
-- Swap brute-force cosine similarity for **FAISS** to scale to 100k+ images.
-- Add **reverse search**: upload an image, find similar images (image→image).
-- Fine-tune CLIP on a niche domain (e.g. fashion, medical imagery) — talk
-  about why zero-shot models sometimes need domain adaptation.
-- Add a confidence threshold and show "no good match" instead of forcing a
-  result.
+---
 
-## Suggested CV bullet point
+## Why this project
 
-> Built and deployed a zero-shot semantic image search engine using OpenAI's
-> CLIP model to jointly embed images and natural-language queries in a shared
-> vector space, ranked by cosine similarity; deployed as a live Streamlit web
-> app requiring no labeled training data.
+Most beginner CV projects are fixed-label classifiers ("cat vs dog"). This
+one demonstrates **multimodal embeddings** — the same underlying idea behind
+Google's image-search-by-text, Pinterest visual search, and CLIP-guided
+generative models like Stable Diffusion. It requires zero labeled training
+data and works on any set of images out of the box.
+
+## Ideas to extend
+
+- Swap brute-force cosine similarity for **FAISS** to scale to 100k+ images
+- Add reverse image search (upload an image, find similar images)
+- Fine-tune CLIP on a niche domain (fashion, medical imaging, etc.)
+- Add a similarity-score threshold to show "no good match" instead of
+  forcing a low-confidence result
+
+## License
+
+MIT — free to use, modify, and learn from.
