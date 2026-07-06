@@ -1,0 +1,8 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+clip-local/
+*.bin
+.streamlit/secrets.toml
+.DS_Store
